@@ -19,9 +19,10 @@ try:
 except:
     import ssl
 
-
+# Led pin is used for debugging
 led = Pin("LED", Pin.OUT)
 
+# The motor class controls the stepper motor using the A4988 driver
 class Motor:
     def __init__(self, dir_pin, step_pin, enable_pin):
         self.dir_pin = Pin(dir_pin, Pin.OUT)
@@ -32,6 +33,7 @@ class Motor:
 
         self.enable_pin.value(1)
 
+        # The direction is determined by the sign of the steps
         self.dir_pin.value(0 if steps < 0 else 1)
         for _ in range(abs(steps)):
             self.step_pin.value(1)
@@ -45,6 +47,7 @@ motor = Motor(1, 0, 2)
 
 led.value(0)
 
+# Connect to the WiFi network
 def do_connect():
     import network
     wlan = network.WLAN(network.STA_IF)
@@ -61,6 +64,7 @@ def do_connect():
 do_connect()
 
 
+# Connect to the SSE server
 ai = socket.getaddrinfo(SSE_HOST, 443, socket.SOCK_STREAM)[0]
 s = socket.socket(ai[0], ai[1], ai[2])
 s.connect(ai[-1])
@@ -68,6 +72,7 @@ s.connect(ai[-1])
 # Since we use HTTPS, we need to wrap the socket in an SSL context
 s = ssl.wrap_socket(s, server_hostname=SSE_HOST) # type: ignore
 
+# Send the HTTP request to the SSE server
 request = (
     'GET /api/events HTTP/1.0\r\n'
     'Host: %s\r\n'
@@ -78,7 +83,6 @@ request = (
 s.write(bytes(request, 'utf8'))
 
 while True:
-   
    # Constantly stream data from the SSE server
    data = s.readline()
    if data:
@@ -95,4 +99,5 @@ while True:
 
    else:
       break
+
 s.close()
